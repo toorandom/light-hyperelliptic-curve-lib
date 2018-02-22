@@ -1,0 +1,11 @@
+POLY="$1"
+for each in $(seq 0 31)
+        do
+                 ret=$(echo "x=$each;(($POLY)%31)" | bc -q)
+                if [ "$ret" == "0" ]
+                        then
+                    echo "u($each)=0"
+                    fi
+                done
+
+

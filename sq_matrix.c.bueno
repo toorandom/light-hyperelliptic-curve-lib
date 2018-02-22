@@ -1,0 +1,492 @@
+#include "hyper.h"
+
+
+/* Cambia la k-esima columna de 'a' (k=1...n) por la columna c */
+void
+sq_matrix_change_column (sq_matrix_t * a, int *c, int k)
+{
+  int i;
+  for (i = 0; i < a->n; i++)
+    a->c[i][k] = c[i];
+}
+
+void
+sq_matrix_print (sq_matrix_t * a)
+{
+
+  int i, j;
+  for (i = 0; i < a->n; i++)
+    {
+      if (i > 0)
+	printf ("\n");
+      for (j = 0; j < a->n; j++)
+	{printf ("%d, ", a->c[i][j]);}
+	//printf ("%d\t", mod_p (a->c[i][j]));
+   }
+}
+
+sq_matrix_t *
+sq_matrix_alloc (unsigned int n)
+{
+  sq_matrix_t *r;
+  int i;
+  r = calloc (1, sizeof (struct sq_matrix));
+  r->n = n;
+  r->c = calloc (n, sizeof (int));
+  for (i = 0; i < n; i++)
+    r->c[i] = calloc (n, sizeof (int));
+  return r;
+}
+
+void
+sq_matrix_free(sq_matrix_t *m) {
+ int i;
+ for(i=0;i<m->n;i++)
+    free(m->c[i]);
+  m->n=0;
+  free(m->c);
+}
+
+int
+sq_matrix_determinant (sq_matrix_t * a)
+{
+
+  int i, j, i_c, j_c, c;
+  sq_matrix_t *menor;
+  int det = 0;
+  menor = sq_matrix_alloc (a->n - 1);
+
+  if (a->n == 1)
+    return a->c[0][0];
+  if (a->n == 2)
+    return (a->c[0][0] * a->c[1][1] - a->c[0][1] * a->c[1][0]);
+
+  for (c = 0; c < a->n; c++)
+    {
+      i_c = 0;
+      for (i = 1; i < a->n; i++)
+	{
+	  j_c = 0;
+	  for (j = 0; j < a->n; j++)
+	    {
+	      if (j == c)
+		continue;
+	      menor->c[i_c][j_c] = a->c[i][j];
+	      j_c++;
+	    }
+	  i_c++;
+	}
+      det +=
+	((c % 2 == 0) ? 1 : -1) * a->c[0][c] * sq_matrix_determinant (menor);
+     
+    }
+  return mod_p (det);
+  return det;
+
+}
+
+
+
+
+
+void
+sq_matrix_copy (sq_matrix_t * a, sq_matrix_t * b)
+{
+  int i, j;
+  if (a->n != b->n)
+    {
+      fprintf (stderr, "Cannot copy matrices of different dimension\n");
+      exit (EXIT_FAILURE);
+    }
+  for (i = 0; i < b->n; i++)
+    for (j = 0; j < a->n; j++)
+      a->c[i][j] = b->c[i][j];
+
+  a->n = b->n;
+}
+
+
+
+
+/*
+int determinant(sq_matrix_t *a)
+{
+   int deta11dp,deta11do,deta11,deta12dp,deta12do,deta12,deta13dp,deta13do,deta13,deta14dp,deta14do,deta14,det;
+  
+   sq_matrix_print(a);
+
+   deta11dp=(a->c[1][1]*a->c[2][2]*a->c[3][3])+(a->c[1][2]*a->c[2][3]*a->c[3][1])+(a->c[1][3]*a->c[2][1]*a->c[3][2]);
+
+   deta11do=(a->c[1][2]*a->c[2][1]*a->c[3][3])+(a->c[1][1]*a->c[2][3]*a->c[3][2])+(a->c[1][3]*a->c[2][2]*a->c[3][1]);
+
+   deta11=deta11dp-deta11do;
+
+
+   deta12dp=(a->c[1][0]*a->c[2][2]*a->c[3][3])+(a->c[1][2]*a->c[2][3]*a->c[3][0])+(a->c[1][3]*a->c[2][0]*a->c[3][2]);
+
+   deta12do=(a->c[1][2]*a->c[2][0]*a->c[3][3])+(a->c[1][0]*a->c[2][3]*a->c[3][2])+(a->c[1][3]*a->c[2][2]*a->c[3][0]);
+
+   deta12=deta12dp-deta12do;
+
+
+   deta13dp=(a->c[1][0]*a->c[2][1]*a->c[3][3])+(a->c[1][1]*a->c[2][3]*a->c[3][0])+(a->c[1][3]*a->c[2][0]*a->c[3][1]);
+
+   deta13do=(a->c[1][1]*a->c[2][0]*a->c[3][3])+(a->c[1][0]*a->c[2][3]*a->c[3][1])+(a->c[1][3]*a->c[2][1]*a->c[3][0]);
+
+   deta13=deta13dp-deta13do;
+
+
+   deta14dp=(a->c[1][0]*a->c[2][1]*a->c[3][2])+(a->c[1][1]*a->c[2][2]*a->c[3][0])+(a->c[1][2]*a->c[2][0]*a->c[3][1]);
+
+   deta14do=(a->c[1][1]*a->c[2][0]*a->c[3][2])+(a->c[1][0]*a->c[2][2]*a->c[3][1])+(a->c[1][2]*a->c[2][1]*a->c[3][0]);
+
+   deta14=deta14dp-deta14do;
+
+   
+
+   det=(a->c[0][0]*(-1*-1)*deta11)+(a->c[0][1]*(-1*-1*-1)*deta12)+(a->c[0][2]*(-1*-1*-1*-1)*deta13)+(a->c[0][3]*(-1*-1*-1*-1*-1)*deta14);
+   
+   return det;
+}
+*/
+
+
+
+
+
+
+void
+system_solve (sq_matrix_t * a, int *coef, int *res)
+{
+  int *det_sys = calloc (a->n, sizeof (int));
+  sq_matrix_t *t;
+  int det,inv_det, i;
+
+
+//  printf("constantes=%d,%d,%d,%d\n",coef[0],coef[1],coef[2],coef[3]);
+  det = sq_matrix_determinant(a);
+//  sq_matrix_print(a);
+  inv_det = mod_inv(det,p);
+//  printf("Determinante inverso = %d\n",inv_det);
+  if (det == 0)
+    {
+      fprintf (stderr, "The system has no solutions\n");
+      sq_matrix_print(a);
+      exit(1);
+    }
+
+  t = sq_matrix_alloc (a->n);
+
+  sq_matrix_copy (t, a);
+//  printf ("Matriz original\n");
+//  sq_matrix_print (t);
+//  printf ("su determinante es %d\n", det);
+  for (i = 0; i < a->n; i++)
+    {
+      sq_matrix_change_column (t, coef, i);
+      det_sys[i] = sq_matrix_determinant (t);
+//      sq_matrix_print (t);
+//      printf ("su determinante es %d\n", det_sys[i]);
+      sq_matrix_copy (t, a);
+      res[i] = mod_p(det_sys[i] * inv_det);
+    }
+return;
+}
+void mumford_print(mumford_t *D) {
+
+printf("u=");
+poly_print(D->u);
+printf("v=");
+poly_print(D->v);
+return;
+
+}
+mumford_t *hyper_g2_double_sup_2(mumford_t *D) {
+sq_matrix_t *m;
+mumford_t *DplusD = mumford_alloc(2);
+int a,b,c,d,coefs[4],sols[4];
+
+/* Curva hipereliptica, parte derecha de  y^2 = x^5 - 1 */
+poly_t *hyperC = poly_alloc(5);
+/* aqui almacenaremos el polinomio de interpolacion de grado 3 */
+poly_t *L = poly_alloc(3);
+/* aqui almacenaremos u*u */
+poly_t *u2 = poly_alloc((2*D->u->t)+1);
+/* aqui almacenaremos L^2 = L*L - C donde C es la curva hipereliptica en este caso deg(L)=3 por eso almacenamos 6 y deg(C)=5 */
+poly_t *L2  = poly_alloc(6);
+/* variable Temporal */
+poly_t *L2_t  = poly_alloc(6);
+/* residuo temporal  */
+poly_t *r = poly_alloc(2);
+/* vars temporales */
+poly_t *q_t = poly_alloc(3);
+poly_t *r_t = poly_alloc(3);
+/* obtenemos u*u */
+poly_mul(D->u,D->u,u2);
+/* almacenamos memoria para el sistema de 4 variables por 4 ecuaciones*/
+m = sq_matrix_alloc(4);
+
+/* rellenamos la parte derecha de la curva hipereliptica g=2 para manipularla x^5 -1 mod p y la multiplicamos por -1 (la restaremos a L*L)  */
+hyperC->c[5]=mod_p(-1*1);
+hyperC->c[4]=0;
+hyperC->c[3]=0;                        //CORRECCION
+hyperC->c[2]=0;
+hyperC->c[1]=0;
+hyperC->c[0]=1; //mod_p(-1*30);
+
+
+
+
+a = D->u->c[1];
+b = D->u->c[0];
+c = D->v->c[1];
+d = D->v->c[0];
+
+/* la matriz resultante para duplicar un divisor:
+ 
+a^2-b   	-a      	1	0	|c
+ab      	-b      	0	1	|d
+6a^2c-6ad-6bc   -4ac+4d         2c      0       |10ab-5a^3
+6abc-6bd        -4bc            2d      0       |5b^2-5ba^2
+
+*/
+/* primer renglon con matriz aumentada */
+m->c[0][0] = mod_p((a*a)-b);
+m->c[0][1] = mod_p(-1*a);
+m->c[0][2] = 1;
+m->c[0][3] = 0;
+coefs[0] = mod_p(c);
+
+/* segundo renglon con matriz aumentada */
+m->c[1][0] = mod_p(a*b);
+m->c[1][1] = mod_p(-1*b);
+m->c[1][2] = 0;
+m->c[1][3] = 1;
+coefs[1] = mod_p(d);
+
+/* tercer renglon con matriz aumentada */
+m->c[2][0] = mod_p((6*a*a*c)-(6*a*d)-(6*b*c));
+m->c[2][1] = mod_p((4*d)-(4*a*c));
+m->c[2][2] = mod_p(2*c);
+m->c[2][3] = 0;
+coefs[2] = mod_p((10*a*b)-(5*a*a*a));
+
+/* cuarto renglon con matriz aumentada */
+m->c[3][0] = mod_p((6*a*b*c)-(6*b*d));
+m->c[3][1] = mod_p(-1*4*b*c);
+m->c[3][2] = mod_p(2*d);
+m->c[3][3] = 0;
+coefs[3] = mod_p((5*b*b)-(5*b*a*a));
+
+system_solve(m,(int *)&coefs,(int *)&sols);
+L->c[0] = sols[3];
+L->c[1] = sols[2];
+L->c[2] = sols[1];
+L->c[3] = sols[0]; //CORRECCION: Transpuesto!!!! 
+L->t = 3;
+
+/*
+printf("L=");
+poly_print(L);
+*/
+
+/* Multiplicamos L*L */
+poly_mul(L,L,L2);
+/* Le restamos L2-C */
+poly_add(L2,hyperC,L2_t);
+/* Dividimos entre u*u para obtener u'(x), r deberia de ser el polinomio cero */
+poly_div(L2_t,u2,DplusD->u,r_t);
+
+/*
+printf("r=");
+poly_print(r);
+*/
+/* Calculamos v'(x) */
+poly_div(L,DplusD->u,q_t,DplusD->v);
+/*
+printf("q_t=");
+poly_print(q_t);
+*/
+/* proyectamos con infinito */
+DplusD->v->c[0] = mod_p(-1*DplusD->v->c[0]);
+DplusD->v->c[1] = mod_p(-1*DplusD->v->c[1]);
+return DplusD;
+
+}
+
+
+mumford_t *hyper_g2_add_disjoint_supp(mumford_t *D1, mumford_t *D2) {
+sq_matrix_t *m;
+mumford_t *D3 = mumford_alloc(2);
+int a,b,c,d,A,B,C,D,coefs[4],sols[4];
+/* Curva hipereliptica, parte derecha de  y^2 = x^5 - 1 */
+poly_t *hyperC = poly_alloc(5);
+/* aqui almacenaremos el polinomio de interpolacion de grado 3 */
+poly_t *L = poly_alloc(3);
+/* aqui almacenaremos u*u' */
+poly_t *u1u2 = poly_alloc(D1->u->t+D2->u->t+1);
+/* aqui almacenaremos L^2 = L*L - C donde C es la curva hipereliptica en este caso deg(L)=3 por eso almacenamos 6 y deg(C)=5 */
+poly_t *L2  = poly_alloc(6);
+/* variable Temporal */
+poly_t *L2_t  = poly_alloc(6);
+/* residuo temporal  */
+poly_t *r = poly_alloc(2);
+/* vars temporales */
+poly_t *q_t = poly_alloc(3);
+poly_t *r_t = poly_alloc(3);
+/* obtenemos u*u' */
+poly_mul(D1->u,D2->u,u1u2);
+/* almacenamos memoria para el sistema de 4 variables por 4 ecuaciones*/
+m = sq_matrix_alloc(4);
+
+/* rellenamos la parte derecha de la curva hipereliptica g=2 para manipularla x^5 -1 mod p y la multiplicamos por -1 (la restaremos a L*L)  */
+hyperC->c[5]=mod_p(-1*1);
+hyperC->c[4]=0;
+hyperC->c[3]=0;                        //CORRECCION
+hyperC->c[2]=0;
+hyperC->c[1]=0;
+hyperC->c[0]=1; //mod_p(-1*30);
+
+/* Solo para ayudarnos con la notacion, nombramos las variables a,b,c,d,A,B,C,D tal que D1=(x^2+ax+b,cx+d) D2=(x^2+Ax+B,Cx+D) */
+a = D1->u->c[1];
+b = D1->u->c[0];
+c = D1->v->c[1];
+d = D1->v->c[0];
+
+A = D2->u->c[1];
+B = D2->u->c[0];
+C = D2->v->c[1];
+D = D2->v->c[0];
+
+/* la matriz resultante es:
+
+a^2-b	-a	1	0	|c
+ab	-b	0	1	|d
+A^2-B	-A	1	0	|C
+AB	-B	0	1	|D
+
+*/
+
+
+/* primer renglon con matriz aumentada */
+m->c[0][0] = mod_p((a*a)-b);
+m->c[0][1] = mod_p(-1*a);
+m->c[0][2] = 1;
+m->c[0][3] = 0;
+coefs[0] = mod_p(c);
+
+/* segundo renglon con matriz aumentada */
+m->c[1][0] = mod_p(a*b);
+m->c[1][1] = mod_p(-1*b);
+m->c[1][2] = 0;
+m->c[1][3] = 1;
+coefs[1] = mod_p(d);
+
+/* tercer renglon con matriz aumentada */
+m->c[2][0] = mod_p((A*A)-B);
+m->c[2][1] = mod_p(-1*A);
+m->c[2][2] = 1;
+m->c[2][3] = 0;
+coefs[2] = mod_p(C);
+
+/* cuarto renglon con matriz aumentada */
+m->c[3][0] = mod_p(A*B);
+m->c[3][1] = mod_p(-1*B);
+m->c[3][2] = 0;
+m->c[3][3] = 1;
+coefs[3] = mod_p(D);
+
+system_solve(m,(int *)&coefs,(int *)&sols);
+L->c[0] = sols[3];
+L->c[1] = sols[2];
+L->c[2] = sols[1];
+L->c[3] = sols[0]; //CORRECCION: Transpuesto!!!! 
+L->t = 3;
+
+//printf("L=");
+//poly_print(L);
+
+/* Multiplicamos L*L */
+poly_mul(L,L,L2);
+/* Le restamos L2-C */
+poly_add(L2,hyperC,L2_t);
+/* Dividimos entre u*u' para obtener u''(x), r deberia de ser el polinomio cero */
+poly_div(L2_t,u1u2,D3->u,r_t);
+
+//printf("r=");
+//poly_print(r);
+/* Calculamos v''(x) */
+poly_div(L,D3->u,q_t,D3->v);
+//printf("q_t=");
+//poly_print(q_t);
+/* proyectamos con infinito */
+D3->v->c[0] = mod_p(-1*D3->v->c[0]);
+D3->v->c[1] = mod_p(-1*D3->v->c[1]);
+return D3;
+}
+
+int
+main (int argc, char **argv)
+{
+mumford_t *D1,*D2,*D3,*D4;
+/* los 4 puntos */
+point_t *a1,*a2,*b1,*b2;
+int raices[2];
+
+/* alojamos memoria */
+a1 = point_alloc();
+a2 = point_alloc();
+b1 = point_alloc();
+b2 = point_alloc();
+
+/* punto 1 para D1 es (13,6) en la curva */
+a1->x = 21;
+a1->y = 6;
+
+/* punto 2 para D1 es (21,25) en la curva */
+b1->x = 19;
+b1->y = 2;
+
+/* punto 1 para D2 es (28,2) en la curva */
+a2->x = 12;
+a2->y = 5;
+
+/* punto 2 para D2 es (3,5) en la curva */
+b2->x = 28;
+b2->y = 29;
+
+/* Construimos los divisores con los puntos racionales */
+D1 = mumford_build_g2(a1,b1) ;
+D2 = mumford_build_g2(a2,b2) ;
+
+/* sumamos :) */
+D3 = hyper_g2_add_disjoint_supp(D1,D2);
+
+/* doblamos punto */
+
+D4 = hyper_g2_double_sup_2(D1);
+
+
+
+/* imprimimos */
+printf("[D1]:\n");
+mumford_print(D1);
+divisorform_g2_print(D1);
+printf("\n");
+printf("[D2]:\n");
+mumford_print(D2);
+divisorform_g2_print(D2);
+printf("\n");
+printf("[D1]+[D2]=[D3]:\n");
+
+mumford_print(D3);
+divisorform_g2_print(D3);
+printf("\n");
+mumford_free(D3);
+printf("2[D1]=[D4]:\n");
+mumford_print(D4);
+divisorform_g2_print(D4);
+printf("\n");
+mumford_free(D4);
+return 0;
+}
